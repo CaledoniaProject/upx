@@ -286,6 +286,7 @@ static void check_options(int i, int argc)
         fprintf(stderr,"%s: cannot use '--stdout' when compressing\n", argv0);
         e_usage();
     }
+    /*
     if (opt->to_stdout || opt->output_name)
     {
         if (i + 1 != argc)
@@ -295,6 +296,7 @@ static void check_options(int i, int argc)
             e_usage();
         }
     }
+    */
 }
 
 
@@ -341,6 +343,29 @@ static bool set_method(int m, int l)
     return true;
 }
 
+static void set_extra_dll(const char *n, bool allow_m)
+{
+#if 1
+    if (done_extra_dll_name > 0)
+    {
+        fprintf(stderr, "%s: option '-X' more than once given\n", argv0);
+        e_usage();
+    }
+#endif
+    if (!n || !n[0] || (!allow_m && n[0] == '-'))
+    {
+        fprintf(stderr, "%s: missing extra DLL name\n", argv0);
+        e_usage();
+    }
+    if (strlen(n) >= ACC_FN_PATH_MAX - 4)
+    {
+        fprintf(stderr, "%s: extra DLL name too long\n", argv0);
+        e_usage();
+    }
+    opt->extra_dll_name = n;
+    done_extra_dll_name++;
+
+}
 
 static void set_output_name(const char *n, bool allow_m)
 {
@@ -510,6 +535,8 @@ static int do_option(int optc, const char *arg)
     case 'o':
         set_output_name(mfx_optarg,1);
         break;
+    case 'X':
+        set_extra_dll(mfx_optarg, 1);
     case 'q':
         opt->verbose = (opt->verbose > 1 ? 1 : opt->verbose - 1);
         break;
@@ -911,6 +938,7 @@ static const struct mfx_option longopts[] =
     {"no-progress",         0, 0, 516},     // no progress bar
     {"no-time",          0x10, 0, 528},     // do not preserve timestamp
     {"output",           0x21, 0, 'o'},
+    {"extra",            0x21, 0, 'X'},
     {"quiet",               0, 0, 'q'},     // quiet mode
     {"silent",              0, 0, 'q'},     // quiet mode
 #if 0

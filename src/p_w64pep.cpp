@@ -42,6 +42,10 @@
 static const
 #include "stub/amd64-win64.pep.h"
 
+static const
+#include "stub/amd64-win64.unhook-pep.h"
+
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -97,7 +101,14 @@ void PackW64Pep::buildLoader(const Filter *ft)
         tmp_tlsindex = 0;
 
     // prepare loader
-    initLoader(stub_amd64_win64_pep, sizeof(stub_amd64_win64_pep), 2);
+    if (opt->extra_dll_name)
+    {
+        initLoader(stub_amd64_win64_unhook_pep, sizeof(stub_amd64_win64_unhook_pep), 2);
+    }
+    else
+    {
+        initLoader(stub_amd64_win64_pep, sizeof(stub_amd64_win64_pep), 2);
+    }
     addLoader("START");
     if (ih.entry && isdll)
         addLoader("PEISDLL0");

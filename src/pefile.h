@@ -536,6 +536,157 @@ protected:
     pe_header_t ih, oh;
 };
 
+typedef struct _IMAGE_EXPORT_DIRECTORY {
+    LE32   Characteristics;
+    LE32   TimeDateStamp;
+    LE16   MajorVersion;
+    LE16   MinorVersion;
+    LE32   Name;
+    LE32   Base;
+    LE32   NumberOfFunctions;
+    LE32   NumberOfNames;
+    LE32   AddressOfFunctions;     // RVA from base of image
+    LE32   AddressOfNames;         // RVA from base of image
+    LE32   AddressOfNameOrdinals;  // RVA from base of image
+} IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
+
+typedef struct _IMAGE_DOS_HEADER
+{
+    LE16 e_magic;
+    LE16 e_cblp;
+    LE16 e_cp;
+    LE16 e_crlc;
+    LE16 e_cparhdr;
+    LE16 e_minalloc;
+    LE16 e_maxalloc;
+    LE16 e_ss;
+    LE16 e_sp;
+    LE16 e_csum;
+    LE16 e_ip;
+    LE16 e_cs;
+    LE16 e_lfarlc;
+    LE16 e_ovno;
+    LE16 e_res[4];
+    LE16 e_oemid;
+    LE16 e_oeminfo;
+    LE16 e_res2[10];
+    LE32 e_lfanew;
+} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
+
+typedef struct _IMAGE_FILE_HEADER {
+    LE16  Machine;
+    LE16  NumberOfSections;
+    LE32  TimeDateStamp;
+    LE32  PointerToSymbolTable;
+    LE32  NumberOfSymbols;
+    LE16  SizeOfOptionalHeader;
+    LE16  Characteristics;
+} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+
+typedef struct _IMAGE_DATA_DIRECTORY {
+    LE32 VirtualAddress;
+    LE32 Size;
+} IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
+
+#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+typedef struct _IMAGE_OPTIONAL_HEADER {
+    LE16                 Magic;
+    upx_byte             MajorLinkerVersion;
+    upx_byte             MinorLinkerVersion;
+    LE32                 SizeOfCode;
+    LE32                 SizeOfInitializedData;
+    LE32                 SizeOfUninitializedData;
+    LE32                 AddressOfEntryPoint;
+    LE32                 BaseOfCode;
+    LE32                 BaseOfData;
+    LE32                 ImageBase;
+    LE32                 SectionAlignment;
+    LE32                 FileAlignment;
+    LE16                 MajorOperatingSystemVersion;
+    LE16                 MinorOperatingSystemVersion;
+    LE16                 MajorImageVersion;
+    LE16                 MinorImageVersion;
+    LE16                 MajorSubsystemVersion;
+    LE16                 MinorSubsystemVersion;
+    LE32                 Win32VersionValue;
+    LE32                 SizeOfImage;
+    LE32                 SizeOfHeaders;
+    LE32                 CheckSum;
+    LE16                 Subsystem;
+    LE16                 DllCharacteristics;
+    LE32                 SizeOfStackReserve;
+    LE32                 SizeOfStackCommit;
+    LE32                 SizeOfHeapReserve;
+    LE32                 SizeOfHeapCommit;
+    LE32                 LoaderFlags;
+    LE32                 NumberOfRvaAndSizes;
+    IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+} IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
+
+typedef struct _IMAGE_OPTIONAL_HEADER64 {
+    LE16                 Magic;
+    upx_byte             MajorLinkerVersion;
+    upx_byte             MinorLinkerVersion;
+    LE32                 SizeOfCode;
+    LE32                 SizeOfInitializedData;
+    LE32                 SizeOfUninitializedData;
+    LE32                 AddressOfEntryPoint;
+    LE32                 BaseOfCode;
+    LE64                 ImageBase;
+    LE32                 SectionAlignment;
+    LE32                 FileAlignment;
+    LE16                 MajorOperatingSystemVersion;
+    LE16                 MinorOperatingSystemVersion;
+    LE16                 MajorImageVersion;
+    LE16                 MinorImageVersion;
+    LE16                 MajorSubsystemVersion;
+    LE16                 MinorSubsystemVersion;
+    LE32                 Win32VersionValue;
+    LE32                 SizeOfImage;
+    LE32                 SizeOfHeaders;
+    LE32                 CheckSum;
+    LE16                 Subsystem;
+    LE16                 DllCharacteristics;
+    LE64                 SizeOfStackReserve;
+    LE64                 SizeOfStackCommit;
+    LE64                 SizeOfHeapReserve;
+    LE64                 SizeOfHeapCommit;
+    LE32                 LoaderFlags;
+    LE32                 NumberOfRvaAndSizes;
+    IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+} IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
+
+typedef struct _IMAGE_NT_HEADERS {
+    LE32                  Signature;
+    IMAGE_FILE_HEADER     FileHeader;
+    IMAGE_OPTIONAL_HEADER OptionalHeader;
+} IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
+
+typedef struct _IMAGE_NT_HEADERS64 {
+    LE32                    Signature;
+    IMAGE_FILE_HEADER       FileHeader;
+    IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+} IMAGE_NT_HEADERS64, *PIMAGE_NT_HEADERS64;
+
+#define IMAGE_SIZEOF_SHORT_NAME 8
+typedef struct _IMAGE_SECTION_HEADER {
+    upx_byte Name[IMAGE_SIZEOF_SHORT_NAME];
+    union {
+        LE32 PhysicalAddress;
+        LE32 VirtualSize;
+    } Misc;
+    LE32     VirtualAddress;
+    LE32     SizeOfRawData;
+    LE32     PointerToRawData;
+    LE32     PointerToRelocations;
+    LE32     PointerToLinenumbers;
+    LE16     NumberOfRelocations;
+    LE16     NumberOfLinenumbers;
+    LE32     Characteristics;
+} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
+
+unsigned int Rva2Offset(unsigned int rva, PIMAGE_SECTION_HEADER psh, unsigned short NumberOfSections);
+
 #endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

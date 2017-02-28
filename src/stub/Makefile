@@ -58,6 +58,7 @@ STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pep.h
+STUBS += amd64-win64.unhook-pep.h
 STUBS += arm.v4a-linux.elf-entry.h
 STUBS += arm.v4a-linux.elf-fold.h
 STUBS += arm.v4a-wince.pe.h
@@ -111,6 +112,7 @@ STUBS += i386-netbsd.elf-entry.h
 STUBS += i386-netbsd.elf-fold.h
 STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-win32.pe.h
+STUBS += i386-win32.unhook-pe.h
 STUBS += m68k-atari.tos.h
 STUBS += mips.r3000-linux.elf-entry.h
 STUBS += mips.r3000-linux.elf-fold.h
@@ -405,6 +407,24 @@ tc.amd64-win64.pep.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes 
 tc.amd64-win64.pep.objdump = multiarch-objdump-2.23.90
 
 amd64-win64.pep.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+# /***********************************************************************
+# // amd64-win64.unhook-pep
+# ************************************************************************/
+
+amd64-win64.unhook-pep.h : tc_list = amd64-win64.unhook-pep default
+amd64-win64.unhook-pep.h : tc_bfdname = elf64-x86-64
+amd64-win64.unhook-pep.h : tc_objdump_disasm_options = -M intel-mnemonic
+
+tc.amd64-win64.unhook-pep.gcc  = amd64-linux-gcc-4.1.1 -m64 -nostdinc -MMD -MT $@
+tc.amd64-win64.unhook-pep.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-win64.unhook-pep.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.amd64-win64.unhook-pep.objdump = multiarch-objdump-2.23.90
+
+amd64-win64.unhook-pep.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1068,6 +1088,18 @@ i386-win32.pe.h : tc_list = arch-i386 default
 i386-win32.pe.h : tc_bfdname = elf32-i386
 
 i386-win32.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+# /***********************************************************************
+# // i386-win32.unhook-pe
+# ************************************************************************/
+
+i386-win32.unhook-pe.h : tc_list = arch-i386 default
+i386-win32.unhook-pe.h : tc_bfdname = elf32-i386
+
+i386-win32.unhook-pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@

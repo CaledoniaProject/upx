@@ -34,6 +34,8 @@
 #include "linker.h"
 
 #define FILLVAL         0
+#define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#define SH_DENYWR (-1)
 
 /*************************************************************************
 //
@@ -2157,6 +2159,28 @@ void PeFile::callProcessResources(Resource &res, unsigned &ic)
     ic += soresources;
 }
 
+unsigned int Rva2Offset(unsigned int rva, PIMAGE_SECTION_HEADER psh, unsigned short NumberOfSections)
+{
+    size_t i = 0;
+    PIMAGE_SECTION_HEADER pSeh;
+    if (rva == 0)
+    {
+        return (rva);
+    }
+    pSeh = psh;
+    for (i = 0; i < NumberOfSections; i++)
+    {
+        if (rva >= pSeh->VirtualAddress && rva < pSeh->VirtualAddress +
+            pSeh->Misc.VirtualSize)
+        {
+            break;
+        }
+        pSeh++;
+    }
+    return (rva - pSeh->VirtualAddress + pSeh->PointerToRawData);
+}
+
+
 template <typename LEXX, typename ht>
 void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
                    unsigned subsystem_mask, upx_uint64_t default_imagebase,
@@ -2286,7 +2310,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     getLoaderSection("UPX1HEAD",(int*)&ic);
     identsize += ic;
 
-    const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
+    unsigned oobjs = last_section_rsrc_only ? 4 : 3;
+
     ////pe_section_t osection[oobjs];
     pe_section_t osection[4];
     // section 0 : bss
@@ -2464,6 +2489,21 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         }
     }
 
+    if (opt->extra_dll_name)
+    {
+        // Set up the section
+        strcpy(osection[3].name, "UPX3");
+
+        osection[3].vaddr = res_start;
+        osection[3].size = (extra_dll_size + fam1) &~fam1;
+        osection[3].vsize = osection[3].size;
+        osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
+        osection[3].flags = (unsigned)(PEFL_DATA | PEFL_EXEC | PEFL_READ);
+
+        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~oam1;
+        oh.objects = oobjs = 4;
+    }
+
     oh.bsssize  = osection[0].vsize;
     oh.datasize = osection[2].vsize + (oobjs > 3 ? osection[3].vsize : 0);
     setOhDataBase(osection);
@@ -2517,10 +2557,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     fo->write(oxrelocs,soxrelocs);
     if (!last_section_rsrc_only)
         fo->write(oxrelocs,soxrelocs);
-
     if ((ic = fo->getBytesWritten() & fam1) != 0)
         fo->write(ibuf,oh.filealign - ic);
-
     if (last_section_rsrc_only)
     {
         fo->write(oresources,soresources);
@@ -2528,7 +2566,20 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
             fo->write(ibuf,oh.filealign - ic);
     }
 
-#if 0
+    // Copy our extra DLL Into the section
+    if (opt->extra_dll_name)
+    {
+        MemBuffer extra_dll(extra_dll_size);
+        InputFile xi;
+        xi.sopen(opt->extra_dll_name, O_RDONLY | O_BINARY, SH_DENYWR);
+        xi.readx(&extra_dll, extra_dll_size);
+        xi.close();
+
+        fo->write(&extra_dll, extra_dll_size);
+    }
+
+
+//#if 0
     printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
     printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection[0])*oobjs);
     printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
@@ -2540,7 +2591,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
     printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
     printf("%-13s: loadconf     : %8ld bytes\n", getName(), (long) soloadconf);
-#endif
+//#endif
 
     // verify
     verifyOverlappingDecompression();

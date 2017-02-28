@@ -37,6 +37,9 @@
 static const
 #include "stub/i386-win32.pe.h"
 
+static const
+#include "stub/i386-win32.unhook-pe.h"
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -107,7 +110,15 @@ void PackW32Pe::buildLoader(const Filter *ft)
         tmp_tlsindex = 0;
 
     // prepare loader
-    initLoader(stub_i386_win32_pe, sizeof(stub_i386_win32_pe), 2);
+    // prepare loader
+    if (opt->extra_dll_name)
+    {
+        initLoader(stub_i386_win32_unhook_pe, sizeof(stub_i386_win32_unhook_pe), 2);
+    }
+    else
+    {
+        initLoader(stub_i386_win32_pe, sizeof(stub_i386_win32_pe), 2);
+    }
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
